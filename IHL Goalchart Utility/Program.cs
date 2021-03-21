@@ -8,27 +8,43 @@ class WriteAllText
     {
 
         // string newgamecheck = "false";
-        bool createnewfolder = false;
+        //   bool createnewfolder = false;
         string newfolderdirectory = "pog";
         string season = "";
         int gamenum = 0;
         string filename = "";
-        int round = 1;
+        int shootoutround = 1;
         // await File.WriteAllTextAsync("C:/Users/JD/Documents/1b/walter.txt", writtentext);
         Console.WriteLine("Would you like to create a new game? True or False?");
-        bool newgame = bool.Parse(Console.ReadLine());
-
-        if (newgame == true)
+        bool newgame = false;
+        string newgameq = Console.ReadLine();
+        if (newgameq.Contains("yes"))
         {
-            createnewfolder = true;
+            newgame = true;
+        }
+        else if (newgameq.Contains("YES"))
+        {
+            newgame = true;
+        }
+        else if (newgameq.Contains("Yes"))
+        {
+            newgame = true;
         }
         else
         {
-            createnewfolder = false;
+            newgame = false;
         }
-        Console.WriteLine($"Creating new folder? {createnewfolder}");
+        /*  if (newgame == true) 
+          {
+              createnewfolder = true;
+          }
+          else
+          {
+              createnewfolder = false;
+          } */
+        Console.WriteLine($"Creating new folder? {newgame}");
         Console.WriteLine();
-        if (createnewfolder == true)
+        if (newgame == true)
         {
             Console.WriteLine("What season is this game for?");
             season = Console.ReadLine();
@@ -56,25 +72,38 @@ class WriteAllText
             Console.WriteLine("What game number are you editing?");
             gamenum = int.Parse(Console.ReadLine());
             Console.WriteLine($"");
-            goto editor;
+            if (!File.Exists($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt"))
+            {
+                Console.WriteLine($"File not found! Creating a new log file in the following directory: C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt");
+                Directory.CreateDirectory($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}");
+                File.Create($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt").Dispose();
+                Console.ReadKey();
+                goto editor;
+            }
+            else
+            {
+                goto editor;
+            }
         }
     editor:
         filename = $"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt";
         string[][] currenttext = new[] { File.ReadAllLines(filename) }; // gets all current lines of the text doc
-        Console.WriteLine($"Season is: {season}\nGame Number is: {gamenum}\nFolder/File Creation?: {createnewfolder}");
+        Console.WriteLine($"Season is: {season}\nGame Number is: {gamenum}\nFolder/File Creation?: {newgame}");
         Console.WriteLine();
+    editorcontinue:
         Console.WriteLine($"You are editing the goal log file for {gamenum} of the {season} season. Writing current text:");
         Console.WriteLine();
         //  string[] inputtext = new[] { "haha funny text", "barry BEE benson", "walter", "19 Dollar Fortnite Card, who wants it?", "Zdeno Chara", "i am groot" };
         string line = ""; //this next bit displays the current text
         int counter = 0;
-        StreamReader file =  new StreamReader(@$"{filename}"); // haha not code taken off C# documentation at all definitely not, never!!
+        StreamReader file = new StreamReader(@$"{filename}"); // haha not code taken off C# documentation at all definitely not, never!!
         while ((line = file.ReadLine()) != null)
         {
             Console.WriteLine(line);
             counter++;
         }
-         // ok this is the last line that does the displaying of the current text
+        file.Close();
+        // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
         Console.WriteLine("What team?");
@@ -108,27 +137,64 @@ class WriteAllText
         else if (occurence.Contains("shootout"))
         {
             Console.WriteLine();
-            Console.WriteLine("Round number?");
-            round = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine();
-            occurence = $"scores a shootout goal";
+            Console.WriteLine("Would you like to enter shootout mode? Case sensitive.");
+            string shootout = (Console.ReadLine());
+            if (shootout.Contains("yes") || shootout.Contains("Yes") || shootout.Contains("YES"))
+            {
+                shootoutanotherone:
+                Console.WriteLine("Round number?");
+                shootoutround = Convert.ToInt32(Console.ReadLine());
+                Console.WriteLine();
+                Console.WriteLine("Was a shootout goal scored?");
+                string shootoutscore = Console.ReadLine();
+                bool shootoutscorebool = (shootoutscore.Contains("yes"));
+                if (shootoutscorebool)
+                {
+                    occurence = $"scores a shootout goal";
+                }
+                else
+                {
+                    occurence = $"missed";
+                }
+                File.AppendAllText(filename, $"\n{team} {occurence} in Round {shootoutround} of the shootout!");
+                Console.WriteLine();
+                Console.WriteLine("Is the shootout still ongoing?");
+                string shootoutcontinue = Console.ReadLine();
+                if (shootoutcontinue.Contains("Yes") || shootoutcontinue.Contains("YES") || shootoutcontinue.Contains("yes"))
+                {
+                    goto shootoutcontinue;
+                }
+                else
+                {
+                    goto continuationq;
+                }
+            shootoutcontinue:
+                Console.WriteLine("Team name?");
+                team = Console.ReadLine();
+                goto shootoutanotherone;
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("Returning to the editor...");
+                goto editor;
+            }
         }
-        if (!occurence.Contains("shootout"))
+        if (occurence.Contains("shootout") || occurence.Contains("missed"))
         {
-            File.AppendAllText(filename, $"{team} {occurence} with {minute}:{second} remaining in the {period}");
+            File.AppendAllText(filename, $"\n{team} {occurence} in Round {shootoutround} of the shootout!");
         }
         else
         {
-            File.AppendAllText(filename, $"{team} {occurence} in Round {round}!");
-
+            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{second} remaining in period {period}");
         }
-
+    continuationq:
         Console.WriteLine("");
         Console.WriteLine("Would you like to continue editing?");
         string continuationQ = Console.ReadLine();
         if (continuationQ.Contains("yes"))
         {
-            goto editor;
+            goto editorcontinue;
         }
         else
         {
