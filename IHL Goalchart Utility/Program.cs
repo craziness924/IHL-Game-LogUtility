@@ -13,7 +13,7 @@ class WriteAllText
         string season = "";
         int gamenum = 0;
         string filename = "";
-    walter:
+        int round = 1;
         // await File.WriteAllTextAsync("C:/Users/JD/Documents/1b/walter.txt", writtentext);
         Console.WriteLine("Would you like to create a new game? True or False?");
         bool newgame = bool.Parse(Console.ReadLine());
@@ -68,13 +68,13 @@ class WriteAllText
         //  string[] inputtext = new[] { "haha funny text", "barry BEE benson", "walter", "19 Dollar Fortnite Card, who wants it?", "Zdeno Chara", "i am groot" };
         string line = ""; //this next bit displays the current text
         int counter = 0;
-        StreamReader file =
-    new StreamReader(@$"{filename}"); // haha not code taken off C# documentation at all definitely not, never!!
+        StreamReader file =  new StreamReader(@$"{filename}"); // haha not code taken off C# documentation at all definitely not, never!!
         while ((line = file.ReadLine()) != null)
         {
             Console.WriteLine(line);
             counter++;
-        } // ok this is the last line that does the displaying of the current text
+        }
+         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
         Console.WriteLine("What team?");
@@ -94,10 +94,6 @@ class WriteAllText
         {
             occurence = $"iced the puck";
         }
-        else if (occurence.Contains("scored"))
-        {
-            occurence = $"scored";
-        }
         else if (occurence.Contains("penalty"))
         {
             Console.WriteLine();
@@ -109,8 +105,37 @@ class WriteAllText
         {
             occurence = "was called offsides";
         }
-        File.AppendAllText(filename, $"{team} {occurence} with {minute}:{second} remaining in the {period}");
-        goto editor;
+        else if (occurence.Contains("shootout"))
+        {
+            Console.WriteLine();
+            Console.WriteLine("Round number?");
+            round = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine();
+            occurence = $"scores a shootout goal";
+        }
+        if (!occurence.Contains("shootout"))
+        {
+            File.AppendAllText(filename, $"{team} {occurence} with {minute}:{second} remaining in the {period}");
+        }
+        else
+        {
+            File.AppendAllText(filename, $"{team} {occurence} in Round {round}!");
+
+        }
+
+        Console.WriteLine("");
+        Console.WriteLine("Would you like to continue editing?");
+        string continuationQ = Console.ReadLine();
+        if (continuationQ.Contains("yes"))
+        {
+            goto editor;
+        }
+        else
+        {
+            Console.WriteLine();
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
 
 
 
