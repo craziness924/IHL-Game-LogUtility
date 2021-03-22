@@ -1,21 +1,22 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 
 class WriteAllText
 {
-    public static async Task Main()
+    public static void Main()
     {
-
-        // string newgamecheck = "false";
-        //   bool createnewfolder = false;
-        string newfolderdirectory = "pog";
+        string configfiledir = "config.txt";
+        CreateConfig(configfiledir);
+        string preferreddir = File.ReadAllText(configfiledir);
         string season = "";
-        int gamenum = 0;
+        string occurence = "";
         string filename = "";
+        int gamenum = 0;
+
         int shootoutround = 1;
-        // await File.WriteAllTextAsync("C:/Users/JD/Documents/1b/walter.txt", writtentext);
-        Console.WriteLine("Would you like to create a new game? True or False?");
+
+
+        Console.WriteLine($"Would you like to create a new game? True or False? Yes/no? Using directory: {preferreddir}");
         bool newgame = false;
         string newgameq = Console.ReadLine();
         if (newgameq.Contains("yes"))
@@ -51,17 +52,17 @@ class WriteAllText
             Console.WriteLine();
             Console.WriteLine("What game number is it?");
             gamenum = int.Parse(Console.ReadLine());
-            if (!File.Exists($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt"))
+            if (!File.Exists($"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt"))
             {
-                Console.WriteLine($"Creating a new goal logger file in the following directory: C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}");
-                Directory.CreateDirectory($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}");
-                File.Create($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt").Dispose();
+                Console.WriteLine($"Creating a new event logger file in the following directory: {preferreddir}{season}/Event Logs/Game{gamenum}");
+                Directory.CreateDirectory($"{preferreddir}{season}/Event Logs/Game{gamenum}");
+                File.Create($"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt").Dispose();
 
                 goto editor;
             }
             else
             {
-                Console.WriteLine($"File already exists at IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt, new folder and text not created.");
+                Console.WriteLine($"File already exists at IHL/{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt, new folder and text not created.");
             }
         }
         else
@@ -72,11 +73,11 @@ class WriteAllText
             Console.WriteLine("What game number are you editing?");
             gamenum = int.Parse(Console.ReadLine());
             Console.WriteLine($"");
-            if (!File.Exists($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt"))
+            if (!File.Exists($"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt"))
             {
-                Console.WriteLine($"File not found! Creating a new log file in the following directory: C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt");
-                Directory.CreateDirectory($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}");
-                File.Create($"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt").Dispose();
+                Console.WriteLine($"File not found! Creating a new log file in the following directory: C:/Users/JD/Documents/IHL/{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt");
+                Directory.CreateDirectory($"{preferreddir}{season}/Event Logs/Game{gamenum}");
+                File.Create($"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt").Dispose();
                 Console.ReadKey();
                 goto editor;
             }
@@ -86,17 +87,17 @@ class WriteAllText
             }
         }
     editor:
-        filename = $"C:/Users/JD/Documents/IHL/{season}/Goal Charts/Game{gamenum}/Game{gamenum}.txt";
+        filename = $"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt";
         string[][] currenttext = new[] { File.ReadAllLines(filename) }; // gets all current lines of the text doc
         Console.WriteLine($"Season is: {season}\nGame Number is: {gamenum}\nFolder/File Creation?: {newgame}");
         Console.WriteLine();
     editorcontinue:
-        Console.WriteLine($"You are editing the goal log file for {gamenum} of the {season} season. Writing current text:");
+        Console.WriteLine($"You are editing the event log file for game {gamenum} of the {season} season. Writing current text:");
         Console.WriteLine();
         //  string[] inputtext = new[] { "haha funny text", "barry BEE benson", "walter", "19 Dollar Fortnite Card, who wants it?", "Zdeno Chara", "i am groot" };
         string line = ""; //this next bit displays the current text
         int counter = 0;
-        StreamReader file = new StreamReader(@$"{filename}"); // haha not code taken off C# documentation at all definitely not, never!!
+        StreamReader file = new StreamReader(@$"{filename}"); 
         while ((line = file.ReadLine()) != null)
         {
             Console.WriteLine(line);
@@ -106,7 +107,7 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team?");
+        Console.WriteLine("What team? \nIf you'd like to log a shootout, enter whatever you'd like into the Team and time fields and then type 'shootout' (case sensitive) in the event question.");
         string team = Console.ReadLine();
         Console.WriteLine();
         Console.WriteLine("What period did the event happen in?");
@@ -116,14 +117,16 @@ class WriteAllText
         int minute = Convert.ToInt32(Console.ReadLine());
         Console.WriteLine($"What second?");
         int second = Convert.ToInt32(Console.ReadLine());
+        string secondscleaned = "";
+        secondscleaned = CleanedSeconds(second);
         Console.WriteLine();
         Console.WriteLine("What happened?");
-        string occurence = Console.ReadLine();
+        occurence = Console.ReadLine();
         if (occurence.Contains("icing") || occurence.Contains("iced"))
         {
             occurence = $"iced the puck";
         }
-        else if (occurence.Contains("penalty"))
+        else if (occurence.Contains("penalty") || occurence.Contains("Penalty"))
         {
             Console.WriteLine();
             Console.WriteLine("What type of penalty?");
@@ -134,14 +137,18 @@ class WriteAllText
         {
             occurence = "was called offsides";
         }
+        else if (occurence.Contains("score") || occurence.Contains("goal"))
+        {
+            occurence = "scored";
+        }
         else if (occurence.Contains("shootout"))
         {
             Console.WriteLine();
-            Console.WriteLine("Would you like to enter shootout mode? Case sensitive.");
+            Console.WriteLine("Would you like to enter shootout mode? Case sensitive. yes/no?");
             string shootout = (Console.ReadLine());
             if (shootout.Contains("yes") || shootout.Contains("Yes") || shootout.Contains("YES"))
             {
-                shootoutanotherone:
+            shootoutanotherone:
                 Console.WriteLine("Round number?");
                 shootoutround = Convert.ToInt32(Console.ReadLine());
                 Console.WriteLine();
@@ -180,19 +187,29 @@ class WriteAllText
                 goto editor;
             }
         }
+        else if (occurence.Contains("cancel"))
+        {
+            Console.WriteLine("Cancelling current edit.");
+            goto editorcontinue;
+        }
+        else
+        {
+            Console.WriteLine("Event not recognized, returning to editor...");
+            goto editorcontinue;
+        }
         if (occurence.Contains("shootout") || occurence.Contains("missed"))
         {
             File.AppendAllText(filename, $"\n{team} {occurence} in Round {shootoutround} of the shootout!");
         }
         else
         {
-            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{second} remaining in period {period}");
+            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in period {period}.");
         }
     continuationq:
         Console.WriteLine("");
         Console.WriteLine("Would you like to continue editing?");
         string continuationQ = Console.ReadLine();
-        if (continuationQ.Contains("yes"))
+        if (continuationQ.Contains("yes") || continuationQ.Contains("Yes") || continuationQ.Contains("yes"))
         {
             goto editorcontinue;
         }
@@ -202,21 +219,24 @@ class WriteAllText
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
-
-
-
-
-
-        /* Console.WriteLine("What team scored?");
-         string scoringteam = Console.ReadLine();
-         Console.WriteLine();
-         Console.WriteLine("What period did the team score in?");
-         int scoringperiod = Convert.ToInt32(Console.ReadLine());
-         Console.WriteLine();
-         Console.WriteLine($"{scoringteam} scored at what minute");
-         int scoringminute = Convert.ToInt32(Console.ReadLine());
-         Console.WriteLine($"What second did they score at?");
-         int scoringsecond = Convert.ToInt32(Console.ReadLine());
-         Console.WriteLine(); */
+    }
+    public static void CreateConfig(string configdir)
+    {
+        if (!File.Exists($"{configdir}"))
+        {
+            File.WriteAllText(configdir, "C:/Users/JD/Documents/IHL/");
+            Console.WriteLine("Config file created in exe directory. \nIf this is your first time, please edit 'config.txt' to use your directory and restart the program.");
+            Console.WriteLine();
+        }
+    }
+    public static string CleanedSeconds(int seconds)
+    {
+        string secondsclean = "";
+        if (seconds < 10)
+        {
+            secondsclean = $"0{seconds}";
+        }
+        else secondsclean = $"{seconds}";
+        return secondsclean;
     }
 }
