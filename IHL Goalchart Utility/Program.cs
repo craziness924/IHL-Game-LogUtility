@@ -16,7 +16,7 @@ class WriteAllText
         int shootoutround = 1;
 
 
-        Console.WriteLine($"Would you like to create a new game? True or False? Yes/no? Using directory: {preferreddir}");
+        Console.WriteLine($"Would you like to create a new game? Yes/No? Using directory: {preferreddir}");
         bool newgame = false;
         string newgameq = Console.ReadLine();
         if (newgameq.Contains("yes"))
