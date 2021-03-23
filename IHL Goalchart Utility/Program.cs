@@ -92,15 +92,15 @@ class WriteAllText
         }
         else
         {
-            Console.WriteLine("What season is the game you're editing?");
+          /*  Console.WriteLine("What season is the game you're editing?");
             season = Console.ReadLine();
             Console.WriteLine();
             Console.WriteLine("What game number are you editing?");
-            gamenum = float.Parse(Console.ReadLine());
-            Console.WriteLine($"");
+            gamenum = float.Parse(Console.ReadLine()); */
+            Console.WriteLine($""); 
             if (!File.Exists($"{filename}"))
             {
-                Console.WriteLine($"File not found! Creating a new log file in the following directory: C:/Users/JD/Documents/IHL/{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt");
+                Console.WriteLine($"File not found! Creating a new log file in the following directory: {filename}");
                 Directory.CreateDirectory($"{preferreddir}{season}/Event Logs/Game{gamenum}");
                 File.Create($"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt").Dispose();
                 Console.ReadKey();
