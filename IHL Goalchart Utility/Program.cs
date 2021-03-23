@@ -74,8 +74,8 @@ class WriteAllText
         Console.WriteLine("What game number is it?");
         decimal gottengamenum = decimal.Parse(Console.ReadLine());
         gamenum = (float)Math.Round(gottengamenum, 1);
-        filename = $"{preferreddir}{season}/Event Logs/Game {gamenum}/Game{gamenum}.txt";
-        dirname = $"{preferreddir}{season}/Event Logs/Game {gamenum}";
+        filename = $"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt";
+        dirname = $"{preferreddir}{season}/Event Logs/Game{gamenum}";
         if (newgame == true)
         {
             if (!File.Exists($"{filename}"))
