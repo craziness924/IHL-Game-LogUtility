@@ -14,9 +14,14 @@ class WriteAllText
         string filename = "";
         float gamenum = 0f;
         int shootoutround = 1;
-      //  bool playoffgame = false;
-      //  string playoffround = "";
-      //  string playofteams = "";
+        string challengingteam = "";
+        string offendingteam = "";
+        string challengereason = "";
+        bool challengesuccessful = false;
+        string challengeoutcome = "";
+        //  bool playoffgame = false;
+        //  string playoffround = "";
+        //  string playofteams = "";
         string dirname = "";
         Console.WriteLine($"Would you like to create a new game? Yes/No? Using directory: {preferreddir}");
         bool newgame = false;
@@ -88,16 +93,17 @@ class WriteAllText
             else
             {
                 Console.WriteLine($"File already exists at {filename}, new folder and text not created.");
+                newgame = false;
             }
         }
         else
         {
-          /*  Console.WriteLine("What season is the game you're editing?");
-            season = Console.ReadLine();
-            Console.WriteLine();
-            Console.WriteLine("What game number are you editing?");
-            gamenum = float.Parse(Console.ReadLine()); */
-            Console.WriteLine($""); 
+            /*  Console.WriteLine("What season is the game you're editing?");
+              season = Console.ReadLine();
+              Console.WriteLine();
+              Console.WriteLine("What game number are you editing?");
+              gamenum = float.Parse(Console.ReadLine()); */
+            Console.WriteLine($"");
             if (!File.Exists($"{filename}"))
             {
                 Console.WriteLine($"File not found! Creating a new log file in the following directory: {filename}");
@@ -108,6 +114,7 @@ class WriteAllText
             }
             else
             {
+                
                 goto editor;
             }
         }
@@ -116,6 +123,10 @@ class WriteAllText
         string[] currenttext = File.ReadAllLines(filename);  // gets all current lines of the text doc
         Console.WriteLine($"Season is: {season}\nGame Number is: {gamenum}\nFolder/File Creation?: {newgame}");
         Console.WriteLine();
+        if (newgame)
+        {
+            File.AppendAllText(filename, "1ST:");
+        }
     editorcontinue:
         Console.WriteLine($"You are editing the event log file for game {gamenum} of the {season} season. Writing current text:");
         Console.WriteLine();
@@ -132,17 +143,53 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team? If you'd like to log a shootout, enter 'Shootout'");
+        Console.WriteLine("What team? If you'd like to log a shootout, enter 'Shootout', or if you'd like to log a review, enter 'Review'.\nYou can add a period separator by typing 'period' or 'separate'.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
             team = team.ToLower();
         }
         Thread.Sleep(5);
+        if (team.Contains("period") || team.Contains("separate"))
+        {
+            Console.WriteLine("What period would you like to add a separator for?");
+            int separatingperiod = Convert.ToInt32(Console.ReadLine());
+            string separatingtext = "";
+            switch (separatingperiod)
+            {
+                case 2:
+                    separatingtext = "\n2ND:";
+                    break;
+                case 3:
+                    separatingtext = "\n3RD:";
+                    break;
+                case 4:
+                    separatingtext = "\nOT";
+                    break;
+                case 5:
+                    separatingtext = "\n2OT";
+                    break;
+                case 6:
+                    separatingtext = "\n3OT";
+                    break;
+                case 7:
+                    separatingtext = "\n4OT";
+                    break;
+                case 8:
+                    separatingtext = "\n5OT";
+                    break;
+                case 9:
+                    separatingtext = "\n Well Uh I didn't think we'd get this far. Or you're looking at the code or messing around. Hello!";
+                    break;
+            }
+            Thread.Sleep(5);
+            File.AppendAllText(filename, separatingtext);
+            goto continuationq;
+        }
         if (team.Contains("shootout"))
         {
             Console.WriteLine();
-            Console.WriteLine("Would you like to enter shootout mode? Case sensitive. yes/no?");
+            Console.WriteLine("Would you like to enter shootout mode? Yes/no?");
             string shootout = (Console.ReadLine()).ToLower();
             if (shootout.Contains("yes"))
             {
@@ -199,7 +246,26 @@ class WriteAllText
         string secondscleaned = "";
         secondscleaned = CleanedSeconds(second);
         Console.WriteLine();
-        Console.WriteLine("What happened? Possible options: icing, iced, penalty, offsides, offside, score, goal, cancel.");
+        if (team.Contains("review"))
+        {
+            string supposedpenalty = "";
+            Console.WriteLine("\nWhat are you logging about the review? (enter inconclusive to proceed, enter something else to cancel)");
+            if (Console.ReadLine().ToLower().Contains("inconclusive"))
+            {
+                Console.WriteLine("\nWhat was the supposed penalty?");
+                supposedpenalty = Console.ReadLine();
+                File.AppendAllText(filename, $"Inconclusive {supposedpenalty} penalty review at {minute}:{secondscleaned} remaining in period {period}.");
+                goto continuationq;
+            }
+            else
+            {
+                Console.WriteLine("\nSkipping to normal occurences list...");
+                goto skipreviewmode;
+
+            }
+        }
+    skipreviewmode:;
+        Console.WriteLine("What happened? Possible options: icing, iced, penalty, offsides, offside, score, goal, challenge, cancel.");
         occurence = Console.ReadLine().ToLower();
         if (occurence.Contains("icing") || occurence.Contains("iced"))
         {
@@ -220,6 +286,33 @@ class WriteAllText
         {
             occurence = "scored";
         }
+        else if (occurence.Contains("challenge"))
+        {
+            Console.WriteLine("\nWhat team was challenged?");
+            offendingteam = Console.ReadLine();
+            Console.WriteLine("\nWhat was the challenge for?");
+            challengereason = Console.ReadLine();
+            Console.WriteLine("\nWas the challenge successful?");
+            if (Console.ReadLine().ToLower().Contains("yes"))
+            {
+                challengesuccessful = true;
+            }
+            else
+            {
+                challengesuccessful = false;
+            }
+            challengeoutcome = "";
+            if (challengesuccessful)
+            {
+                challengeoutcome = "successfully";
+            }
+            else
+            {
+                challengeoutcome = "unsuccessfully";
+            }
+            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in period {period}.");
+            goto continuationq;
+        }
         else if (occurence.Contains("cancel"))
         {
             Console.WriteLine("Cancelling current edit.");
@@ -238,6 +331,7 @@ class WriteAllText
         {
             File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in period {period}.");
         }
+
     continuationq:
         Console.WriteLine("");
         Console.WriteLine("Would you like to continue editing?");
