@@ -114,7 +114,7 @@ class WriteAllText
             }
             else
             {
-                
+
                 goto editor;
             }
         }
@@ -143,7 +143,7 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team? If you'd like to log a shootout, enter 'Shootout', or if you'd like to log a review, enter 'Review'.\nYou can add a period separator by typing 'period' or 'separate'.");
+        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
@@ -154,35 +154,9 @@ class WriteAllText
         {
             Console.WriteLine("What period would you like to add a separator for?");
             int separatingperiod = Convert.ToInt32(Console.ReadLine());
-            string separatingtext = "";
-            switch (separatingperiod)
-            {
-                case 2:
-                    separatingtext = "\n2ND:";
-                    break;
-                case 3:
-                    separatingtext = "\n3RD:";
-                    break;
-                case 4:
-                    separatingtext = "\nOT";
-                    break;
-                case 5:
-                    separatingtext = "\n2OT";
-                    break;
-                case 6:
-                    separatingtext = "\n3OT";
-                    break;
-                case 7:
-                    separatingtext = "\n4OT";
-                    break;
-                case 8:
-                    separatingtext = "\n5OT";
-                    break;
-                case 9:
-                    separatingtext = "\n Well Uh I didn't think we'd get this far. Or you're looking at the code or messing around. Hello!";
-                    break;
-            }
+            string separatingtext = FormatPeriods(separatingperiod);
             Thread.Sleep(5);
+            separatingtext = "\n\n" + separatingtext.ToUpper() + ":";
             File.AppendAllText(filename, separatingtext);
             goto continuationq;
         }
@@ -238,6 +212,7 @@ class WriteAllText
         Console.WriteLine();
         Console.WriteLine("What period did the event happen in?");
         string period = Console.ReadLine();
+        period = FormatPeriods((Convert.ToInt32(period)));
         Console.WriteLine();
         Console.WriteLine($"What minute?");
         int minute = Convert.ToInt32(Console.ReadLine());
@@ -246,25 +221,35 @@ class WriteAllText
         string secondscleaned = "";
         secondscleaned = CleanedSeconds(second);
         Console.WriteLine();
+        if (team.Contains("stop") || team.Contains("stoppage"))
+        {
+            Console.WriteLine("\nEnter a reason for the stoppage (optional)");
+            string stoppagereason = Console.ReadLine();
+            if (stoppagereason.Length <= 1)
+            {
+                stoppagereason = "Unknown Reason";
+            }
+            string stoppagetext = $"\nPlay stopped with {minute}:{secondscleaned} remaining in the {period} for {stoppagereason}. ";
+            File.AppendAllText(filename, stoppagetext);
+            goto continuationq;
+        }
         if (team.Contains("review"))
         {
             string supposedpenalty = "";
-            Console.WriteLine("\nWhat are you logging about the review? (enter inconclusive to proceed, enter something else to cancel)");
-            if (Console.ReadLine().ToLower().Contains("inconclusive"))
+            Console.WriteLine("\nWhat was the supposed penalty? Enter cancel to return to start.");
+            supposedpenalty = Console.ReadLine();
+            if (supposedpenalty.ToLower().Contains("cancel"))
             {
-                Console.WriteLine("\nWhat was the supposed penalty?");
-                supposedpenalty = Console.ReadLine();
-                File.AppendAllText(filename, $"Inconclusive {supposedpenalty} penalty review at {minute}:{secondscleaned} remaining in period {period}.");
+                Console.WriteLine("\nCancelling inconclusive review logging mode.");
                 goto continuationq;
             }
             else
             {
-                Console.WriteLine("\nSkipping to normal occurences list...");
-                goto skipreviewmode;
-
+                File.AppendAllText(filename, $"\nInconclusive {supposedpenalty} penalty review at {minute}:{secondscleaned} remaining in the {period}.");
+                goto continuationq;
             }
         }
-    skipreviewmode:;
+   // skipreviewmode:;
         Console.WriteLine("What happened? Possible options: icing, iced, penalty, offsides, offside, score, goal, challenge, cancel.");
         occurence = Console.ReadLine().ToLower();
         if (occurence.Contains("icing") || occurence.Contains("iced"))
@@ -310,7 +295,7 @@ class WriteAllText
             {
                 challengeoutcome = "unsuccessfully";
             }
-            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in period {period}.");
+            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}");
             goto continuationq;
         }
         else if (occurence.Contains("cancel"))
@@ -329,7 +314,7 @@ class WriteAllText
         }
         else
         {
-            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in period {period}.");
+            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in the {period}.");
         }
 
     continuationq:
@@ -365,5 +350,39 @@ class WriteAllText
         }
         else secondsclean = $"{seconds}";
         return secondsclean;
+    }
+
+    public static string FormatPeriods(int separatingperiod)
+    {
+        string formattedperiod = "";
+        if (separatingperiod < 7)
+        {
+            switch (separatingperiod)
+            {
+                case 1:
+                    formattedperiod = "1st";
+                    break;
+                case 2:
+                    formattedperiod = "2nd";
+                    break;
+                case 3:
+                    formattedperiod = "3rd";
+                    break;
+                case 4:
+                    formattedperiod = "OT period";
+                    break;
+                case 5:
+                    formattedperiod = "2OT period";
+                    break;
+                case 6:
+                    formattedperiod = "3OT period";
+                    break;
+            }
+        }
+        else
+        {
+            formattedperiod = (separatingperiod - 3) + "OT period";
+        }
+        return formattedperiod;
     }
 }
