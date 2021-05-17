@@ -8,4 +8,8 @@
     <ApplicationIcon>IHL Logo.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TweetinviAPI" Version="5.0.4" />
+  </ItemGroup>
+
 </Project>

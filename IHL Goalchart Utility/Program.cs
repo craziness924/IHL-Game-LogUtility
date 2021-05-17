@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+using Tweetinvi;
+using Tweetinvi.Exceptions;
 
 class WriteAllText
 {
-    public static void Main()
+    public static async Task Main()
     {
         string configfiledir = "config.txt";
         CreateConfig(configfiledir);
@@ -23,7 +27,15 @@ class WriteAllText
         //  string playoffround = "";
         //  string playofteams = "";
         string dirname = "";
-        Console.WriteLine($"Would you like to create a new game? Yes/No? Using directory: {preferreddir}");
+        bool tweetmode = false;
+        Console.WriteLine("Tweet mode?");
+        if (Console.ReadLine().ToLower().Contains("yes"))
+        {
+            tweetmode = true;
+            Console.WriteLine("Sending you to authentication!");
+            await TwitterAuth();
+        }
+        Console.WriteLine($"\nWould you like to create a new game? Yes/No? Using directory: {preferreddir}");
         bool newgame = false;
         string newgameq = Console.ReadLine().ToLower();
         if (newgameq.Contains("yes"))
@@ -104,7 +116,7 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.");
+        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.\nTweets/tweet: Enter to change if Tweetmode is enabled.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
@@ -210,7 +222,7 @@ class WriteAllText
                 goto continuationq;
             }
         }
-   // skipreviewmode:;
+        // skipreviewmode:;
         Console.WriteLine("What happened? Possible options: icing, iced, penalty, offsides, offside, score, goal, challenge, cancel.");
         occurence = Console.ReadLine().ToLower();
         if (occurence.Contains("icing") || occurence.Contains("iced"))
@@ -293,15 +305,7 @@ class WriteAllText
             Console.ReadKey();
         }
     }
-    public static void CreateConfig(string configdir)
-    {
-        if (!File.Exists($"{configdir}"))
-        {
-            File.WriteAllText(configdir, "C:/Users/JD/Documents/IHL/");
-            Console.WriteLine("Config file created in exe directory. \nPlease edit 'config.txt' to use your directory and restart the program.");
-            Console.WriteLine();
-        }
-    }
+
     public static string CleanedSeconds(int seconds)
     {
         string secondsclean = "";
@@ -312,7 +316,58 @@ class WriteAllText
         else secondsclean = $"{seconds}";
         return secondsclean;
     }
+    public static async Task TwitterAuth()
+    {
+        string consumerkey = File.ReadAllText("secure/consumerkey.txt").Trim();
+        string consumerkeysecret = File.ReadAllText("secure/consumersecretkey.txt").Trim();
+        var appClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}");
+        var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
+        Process.Start(new ProcessStartInfo(authenticationRequest.AuthorizationURL)
+        {
+            UseShellExecute = true
+        });
+        Console.WriteLine("Please enter the PIN from the URL on the target account.");
+        File.WriteAllText("secure/pin.txt", Console.ReadLine());
+        string pinCode = File.ReadAllText("secure/pin.txt");
+        var userCredentials = await appClient.Auth.RequestCredentialsFromVerifierCodeAsync(pinCode, authenticationRequest);
+        File.WriteAllText("secure/usercredentials.txt", $"{userCredentials.AccessToken}\n{userCredentials.AccessTokenSecret}");
+        Console.Clear();
+    }
 
+    public static void StringMaker()
+    {
+        string tweet = "";
+        Tweeter(tweet);
+    }
+    static async Task Tweeter(string tweet)
+    {
+        string consumerkey = File.ReadAllText("secure/consumerkey.txt").Trim();
+        string consumerkeysecret = File.ReadAllText("secure/consumersecretkey.txt").Trim();
+        string token = File.ReadAllText("secure/token.txt").Trim();
+        string tokensecret = File.ReadAllText("secure/tokensecret.txt").Trim();
+        string pinCode = "";
+        // Create a client for your app
+        var appClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}");
+
+        // Start the authentication process
+        var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
+        pinCode = File.ReadAllText("secure/pin.txt");
+        token = File.ReadAllLines("secure/usercredentials.txt")[0];
+        tokensecret = File.ReadAllLines("secure/usercredentials.txt")[1];
+        var userClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}", $"{token}", $"{tokensecret}");
+        Console.WriteLine($"\nSending following tweet: {tweet}");
+        var user = await userClient.Users.GetAuthenticatedUserAsync();
+        try
+        {
+            await userClient.Tweets.PublishTweetAsync($"{tweet}");
+        }
+        catch (TwitterException e)
+        {
+            Console.WriteLine(e.ToString());
+            goto continueanyways;
+        }
+    continueanyways:;
+    }
     public static string FormatPeriods(int separatingperiod)
     {
         string formattedperiod = "";
@@ -345,5 +400,49 @@ class WriteAllText
             formattedperiod = (separatingperiod - 3) + "OT period";
         }
         return formattedperiod;
+    }
+    public static void CreateConfig(string configdir)
+    {
+        if (!File.Exists($"{configdir}"))
+        {
+            File.WriteAllText(configdir, "C:/Users/JD/Documents/IHL/");
+            Console.WriteLine("Config file created in exe directory. \nPlease edit 'config.txt' to use your directory and restart the program.");
+            Console.WriteLine();
+        }
+        if (!File.Exists("secure/consumerkey.txt"))
+        {
+            Directory.CreateDirectory("secure");
+            File.Create("secure/consumerkey.txt").Close();
+            Console.WriteLine();
+            Console.WriteLine("Twitter consumer key config file created. Please enter the consumer key of the Twitter app.");
+        }
+        if (!File.Exists("secure/consumersecretkey.txt"))
+        {
+            Directory.CreateDirectory("secure");
+            File.Create("secure/consumersecretkey.txt").Close();
+            Console.WriteLine();
+            Console.WriteLine("Twitter secret consumer key config file created. Please enter the secret consumer key of the Twitter app.");
+        }
+        if (!File.Exists("secure/token.txt"))
+        {
+            Directory.CreateDirectory("secure");
+            File.Create("secure/token.txt").Close();
+            Console.WriteLine();
+            Console.WriteLine("Twitter token config file created. prolly dont need to touch this");
+        }
+        if (!File.Exists("secure/tokensecret.txt"))
+        {
+            Directory.CreateDirectory("secure");
+            File.Create("secure/tokensecret.txt").Close();
+            Console.WriteLine();
+            Console.WriteLine("Twitter secret token config file created. prolly dont need to touch this");
+        }
+        if (!File.Exists("secure/pin.txt"))
+        {
+            Directory.CreateDirectory("secure");
+            File.Create("secure/pin.txt").Close();
+            Console.WriteLine();
+            Console.WriteLine("OAuth Pin config file created. There is no need to edit this file as it'll be overwritten.");
+        }
     }
 }
