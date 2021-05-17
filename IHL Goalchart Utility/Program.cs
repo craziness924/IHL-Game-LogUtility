@@ -34,45 +34,6 @@ class WriteAllText
         {
             newgame = false;
         }
-        /*  Console.WriteLine("Is it a playoff game?");
-          string playoffq = Console.ReadLine().ToLower();
-          if (playoffq.Contains("yes"))
-          {
-              playoffgame = true;
-              Console.WriteLine("What round is it for?");
-              playoffround = Console.ReadLine();
-              Console.WriteLine();
-              Console.WriteLine("What series is it? Team1vTeam2?");
-              playofteams = Console.ReadLine();
-          }
-          else
-          {
-              goto noplayoff;
-          }
-          noplayoff:
-          Console.WriteLine($"Creating new folder? {newgame}");
-          Console.WriteLine();
-          if (playoffgame)
-          {
-              Console.WriteLine("What season is this game for?");
-              season = Console.ReadLine();
-              Console.WriteLine();
-              Console.WriteLine("What round number is it?");
-              gamenum = int.Parse(Console.ReadLine());
-              dirname = $"{preferreddir}{season}/Playoffs/Event Logs/{playoffround}/{playofteams}/{gamenum}";
-              filename = $"{preferreddir}{season}/Playoffs/Event Logs/{playoffround}/{playofteams}/{gamenum}/{gamenum}.txt";
-          }
-          else
-          {
-              Console.WriteLine("What season is this game for?");
-              season = Console.ReadLine();
-              Console.WriteLine();
-              Console.WriteLine("What game number is it?");
-              decimal gottengamenum = decimal.Parse(Console.ReadLine());
-              gamenum = (float)Math.Round(gottengamenum, 1);
-              dirname = $"{preferreddir}{season}/Event Logs/{gamenum}/{gamenum}.txt";
-              filename = $"{preferreddir}{season}/Event Logs/{gamenum}/{gamenum}.txt";
-          } */
         Console.WriteLine("What season is this game for?");
         season = Console.ReadLine();
         Console.WriteLine();
@@ -143,7 +104,7 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.");
+        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
