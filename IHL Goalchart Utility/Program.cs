@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NeoSmart.Unicode;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -28,6 +29,9 @@ class WriteAllText
         //  string playofteams = "";
         string dirname = "";
         bool tweetmode = false;
+        string[] logtext = { };
+        string lastevent = "";
+        bool shouldtweet = false;
         Console.WriteLine("Tweet mode?");
         if (Console.ReadLine().ToLower().Contains("yes"))
         {
@@ -116,7 +120,7 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine("What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.\nTweets/tweet: Enter to change if Tweetmode is enabled.");
+        Console.WriteLine($"What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.\nTweets/tweet: Enter to change if Tweetmode is enabled. Tweet mode is currently set to {tweetmode}\nFinalize: Enter to finalize games or send out final tweets or something idk I havent made it yet.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
@@ -289,9 +293,25 @@ class WriteAllText
         {
             File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in the {period}.");
         }
-
     continuationq:
-        Console.WriteLine("");
+        logtext = File.ReadAllLines(filename);
+        lastevent = logtext[logtext.Length - 1];
+        if (occurence.ToLower().Contains("icing") || occurence.ToLower().Contains("offsides") || occurence.ToLower().Contains("shootout") || occurence.ToLower().Contains("stopped") && tweetmode)
+        {
+            Console.WriteLine($"\nTweet non-important event? Event: {occurence}");
+            if (Console.ReadLine().ToLower().Contains("yes"))
+            {
+                shouldtweet = true;
+            }
+        }
+        else
+        {
+            shouldtweet = true;
+        }
+        if (shouldtweet)
+        {
+            await StringMaker(lastevent);
+        }
         Console.WriteLine("Would you like to continue editing?");
         string continuationQ = Console.ReadLine().ToLower();
         if (continuationQ.Contains("yes"))
@@ -334,10 +354,15 @@ class WriteAllText
         Console.Clear();
     }
 
-    public static void StringMaker()
+    public static async Task StringMaker(string lastevent)
     {
-        string tweet = "";
-        Tweeter(tweet);
+        
+        string tweet = lastevent;
+        if (lastevent.ToLower().Contains("scored"))
+        {
+            tweet =  Emoji.Rooster + $"{lastevent}";
+        }
+        await Tweeter(tweet);
     }
     static async Task Tweeter(string tweet)
     {
@@ -356,15 +381,19 @@ class WriteAllText
         tokensecret = File.ReadAllLines("secure/usercredentials.txt")[1];
         var userClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}", $"{token}", $"{tokensecret}");
         Console.WriteLine($"\nSending following tweet: {tweet}");
-        var user = await userClient.Users.GetAuthenticatedUserAsync();
-        try
+        Console.WriteLine("\nWanna send the tweet? Debug log moment");
+        if (Console.ReadLine().ToLower().Contains("yes"))
         {
-            await userClient.Tweets.PublishTweetAsync($"{tweet}");
-        }
-        catch (TwitterException e)
-        {
-            Console.WriteLine(e.ToString());
-            goto continueanyways;
+            var user = await userClient.Users.GetAuthenticatedUserAsync();
+            try
+            {
+                await userClient.Tweets.PublishTweetAsync($"{tweet}");
+            }
+            catch (TwitterException e)
+            {
+                Console.WriteLine(e.ToString());
+                goto continueanyways;
+            }
         }
     continueanyways:;
     }
