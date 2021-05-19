@@ -32,6 +32,11 @@ class WriteAllText
         string[] logtext = { };
         string lastevent = "";
         bool shouldtweet = false;
+        string hometeam = "";
+        string awayteam = "";
+        int homescore = 0;
+        int awayscore = 0;
+        bool powerplaygoal = false;
         Console.WriteLine("Tweet mode?");
         if (Console.ReadLine().ToLower().Contains("yes"))
         {
@@ -58,7 +63,7 @@ class WriteAllText
         gamenum = (float)Math.Round(gottengamenum, 1);
         filename = $"{preferreddir}{season}/Event Logs/Game{gamenum}/Game{gamenum}.txt";
         dirname = $"{preferreddir}{season}/Event Logs/Game{gamenum}";
-        if (newgame == true)
+        if (newgame)
         {
             if (!File.Exists($"{filename}"))
             {
@@ -102,7 +107,11 @@ class WriteAllText
         Console.WriteLine();
         if (newgame)
         {
-            File.AppendAllText(filename, "1ST:");
+            Console.WriteLine("Who is the home team?");
+            hometeam = Console.ReadLine();
+            Console.WriteLine("\n\nWho is the away team?");
+            awayteam = Console.ReadLine();
+            File.AppendAllText(filename, $"Home Team: {hometeam}\nAway Team: {awayteam}\n\n1ST:");
         }
     editorcontinue:
         Console.WriteLine($"You are editing the event log file for game {gamenum} of the {season} season. Writing current text:");
@@ -246,7 +255,15 @@ class WriteAllText
         }
         else if (occurence.Contains("score") || occurence.Contains("goal"))
         {
-            occurence = "scored";
+            Console.WriteLine("\nPPG?");
+            if (Console.ReadLine().ToLower().Contains("yes"))
+            {
+                occurence = "scored a PPG goal";
+            }
+            else
+            {
+                occurence = "scored";
+            }    
         }
         else if (occurence.Contains("challenge"))
         {
@@ -272,7 +289,7 @@ class WriteAllText
             {
                 challengeoutcome = "unsuccessfully";
             }
-            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}");
+            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}.");
             goto continuationq;
         }
         else if (occurence.Contains("cancel"))
@@ -296,17 +313,17 @@ class WriteAllText
     continuationq:
         logtext = File.ReadAllLines(filename);
         lastevent = logtext[logtext.Length - 1];
-        if (occurence.ToLower().Contains("icing") || occurence.ToLower().Contains("offsides") || occurence.ToLower().Contains("shootout") || occurence.ToLower().Contains("stopped") && tweetmode)
+        if ((occurence.ToLower().Contains("scored") || occurence.ToLower().Contains("challenge") || occurence.ToLower().Contains("review") || occurence.ToLower().Contains("penalty")) && tweetmode)
+        {
+            shouldtweet = true;
+        }
+        else
         {
             Console.WriteLine($"\nTweet non-important event? Event: {occurence}");
             if (Console.ReadLine().ToLower().Contains("yes"))
             {
                 shouldtweet = true;
             }
-        }
-        else
-        {
-            shouldtweet = true;
         }
         if (shouldtweet)
         {
@@ -338,9 +355,9 @@ class WriteAllText
     }
     public static async Task TwitterAuth()
     {
-        string consumerkey = File.ReadAllText("secure/consumerkey.txt").Trim();
-        string consumerkeysecret = File.ReadAllText("secure/consumersecretkey.txt").Trim();
-        var appClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}");
+        string apikey = File.ReadAllText("secure/apikey.txt").Trim();
+        string apikeysecret = File.ReadAllText("secure/apisecretkey.txt").Trim();
+        var appClient = new TwitterClient($"{apikey}", $"{apikeysecret}");
         var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
         Process.Start(new ProcessStartInfo(authenticationRequest.AuthorizationURL)
         {
@@ -356,30 +373,66 @@ class WriteAllText
 
     public static async Task StringMaker(string lastevent)
     {
-        
         string tweet = lastevent;
+        string scoreline = "";
+        string leadingteam = "";
+        string powerplayteam = "";
         if (lastevent.ToLower().Contains("scored"))
         {
-            tweet =  Emoji.Rooster + $"{lastevent}";
+            tweet = Emoji.PoliceCarLight + $" {lastevent}";
+            Console.WriteLine("Append a score update?");
+            if (Console.ReadLine().ToLower().Contains("yes"))
+            {
+                Console.WriteLine("\nWhat's the score? (enter it like 5-4, or whatever it's just a string).");
+                scoreline = Console.ReadLine();
+                Console.WriteLine("\nWhat team is leading? (don't enter if tied ig)");
+                leadingteam = Console.ReadLine();
+                tweet = tweet + $"\n\n{scoreline} " + leadingteam;
+            }
+        }
+        else if (lastevent.ToLower().Contains("challenge"))
+        {
+            if (lastevent.ToLower().Contains("unsuccessfully"))
+            {
+                tweet = Emoji.CrossMark + $" {lastevent}";
+            }
+            else if (lastevent.ToLower().Contains("successfully"))
+            {
+                tweet = Emoji.WhiteHeavyCheckMark + $" {lastevent}";
+            }
+        }
+        else if (lastevent.ToLower().Contains("drew a"))
+        {
+            tweet = Emoji.HighVoltage + $" {lastevent}";
+            Console.WriteLine("\nWho's on the powerplay?");
+            powerplayteam = Console.ReadLine();
+            tweet = tweet + $" {powerplayteam} is on the powerplay!";
+        }
+        Thread.Sleep(5);
+        Console.WriteLine($"Tweet: {tweet}\nAny comments?");
+        if (Console.ReadLine().ToLower().Contains("yes"))
+        {
+            Console.WriteLine("Write your comments and click enter.");
+            tweet = tweet + Console.ReadLine();
         }
         await Tweeter(tweet);
     }
     static async Task Tweeter(string tweet)
     {
-        string consumerkey = File.ReadAllText("secure/consumerkey.txt").Trim();
-        string consumerkeysecret = File.ReadAllText("secure/consumersecretkey.txt").Trim();
+        string apikey = File.ReadAllText("secure/apikey.txt").Trim();
+        string apikeysecret = File.ReadAllText("secure/apisecretkey.txt").Trim();
         string token = File.ReadAllText("secure/token.txt").Trim();
         string tokensecret = File.ReadAllText("secure/tokensecret.txt").Trim();
         string pinCode = "";
         // Create a client for your app
-        var appClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}");
+        var appClient = new TwitterClient($"{apikey}", $"{apikeysecret}");
 
         // Start the authentication process
         var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
         pinCode = File.ReadAllText("secure/pin.txt");
         token = File.ReadAllLines("secure/usercredentials.txt")[0];
         tokensecret = File.ReadAllLines("secure/usercredentials.txt")[1];
-        var userClient = new TwitterClient($"{consumerkey}", $"{consumerkeysecret}", $"{token}", $"{tokensecret}");
+        var userClient = new TwitterClient($"{apikey}", $"{apikeysecret}", $"{token}", $"{tokensecret}");
         Console.WriteLine($"\nSending following tweet: {tweet}");
         Console.WriteLine("\nWanna send the tweet? Debug log moment");
         if (Console.ReadLine().ToLower().Contains("yes"))
@@ -438,33 +491,33 @@ class WriteAllText
             Console.WriteLine("Config file created in exe directory. \nPlease edit 'config.txt' to use your directory and restart the program.");
             Console.WriteLine();
         }
-        if (!File.Exists("secure/consumerkey.txt"))
+        if (!File.Exists("secure/apikey.txt"))
         {
             Directory.CreateDirectory("secure");
-            File.Create("secure/consumerkey.txt").Close();
+            File.Create("secure/apikey.txt").Close();
             Console.WriteLine();
-            Console.WriteLine("Twitter consumer key config file created. Please enter the consumer key of the Twitter app.");
+            Console.WriteLine("Twitter API key config file created. Please enter the API key of the Twitter app before proceeding.");
         }
-        if (!File.Exists("secure/consumersecretkey.txt"))
+        if (!File.Exists("secure/apisecretkey.txt"))
         {
             Directory.CreateDirectory("secure");
-            File.Create("secure/consumersecretkey.txt").Close();
+            File.Create("secure/apisecretkey.txt").Close();
             Console.WriteLine();
-            Console.WriteLine("Twitter secret consumer key config file created. Please enter the secret consumer key of the Twitter app.");
+            Console.WriteLine("Twitter API Secret key config file created. Please enter the API Secret key of the Twitter app before proceeding.");
         }
         if (!File.Exists("secure/token.txt"))
         {
             Directory.CreateDirectory("secure");
             File.Create("secure/token.txt").Close();
             Console.WriteLine();
-            Console.WriteLine("Twitter token config file created. prolly dont need to touch this");
+            Console.WriteLine("Twitter token config file created. There is no need to edit this file as it'll be overwritten.");
         }
         if (!File.Exists("secure/tokensecret.txt"))
         {
             Directory.CreateDirectory("secure");
             File.Create("secure/tokensecret.txt").Close();
             Console.WriteLine();
-            Console.WriteLine("Twitter secret token config file created. prolly dont need to touch this");
+            Console.WriteLine("Twitter secret token config file created. There is no need to edit this file as it'll be overwritten.");
         }
         if (!File.Exists("secure/pin.txt"))
         {
