@@ -47,6 +47,7 @@ class WriteAllText
         Console.WriteLine($"\nWould you like to create a new game? Yes/No? Using directory: {preferreddir}");
         bool newgame = false;
         string newgameq = Console.ReadLine().ToLower();
+        
         if (newgameq.Contains("yes"))
         {
             newgame = true;
@@ -129,13 +130,36 @@ class WriteAllText
         // ok this is the last line that does the displaying of the current text
         //start editing bit
         Console.WriteLine();
-        Console.WriteLine($"What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\n-Challenge: Enter to log a Coach's Challenge.\nTweets/tweet: Enter to change if Tweetmode is enabled. Tweet mode is currently set to {tweetmode}\nFinalize: Enter to finalize games or send out final tweets or something idk I havent made it yet.");
+        Console.WriteLine($"What team? \nFor special actions, you can enter the following:\n-Shootout: Enter shootout to enter shootout mode\n-Review: Enter review to log an inconclusive review.\n-Separate/Period: Enter either to generate a period separator in the text file.\n-Stop/Stoppage: Enter either to log a stoppage of play.\nTweet: Tweet something, anything.\n-Finalize: Enter to finalize games or send out final tweets or something idk I havent made it yet.");
         string team = Console.ReadLine();
         if (team.Length > 3)
         {
             team = team.ToLower();
         }
         Thread.Sleep(5);
+        if (team.Contains("tweet"))
+        {
+            Console.WriteLine("\nWhat would you like to send? Enter cancel to cancel.");
+            if (Console.ReadLine().ToLower().Contains("cancel"))
+            {
+                goto continuationq;
+            }
+            else
+            {
+                string manualtweet = Console.ReadLine();
+                Console.WriteLine($"Would you like to send out the following?\n{manualtweet}");
+                if (Console.ReadLine().ToLower().Contains("yes"))
+                {
+                    await Tweeter(manualtweet);
+                    goto continuationq;
+                }
+                else
+                {
+                    goto continuationq;
+                }
+            }
+
+        }
         if (team.Contains("period") || team.Contains("separate"))
         {
             Console.WriteLine("What period would you like to add a separator for?");
@@ -221,19 +245,29 @@ class WriteAllText
         }
         if (team.Contains("review"))
         {
-            string supposedpenalty = "";
-            Console.WriteLine("\nWhat was the supposed penalty? Enter cancel to return to start.");
-            supposedpenalty = Console.ReadLine();
-            if (supposedpenalty.ToLower().Contains("cancel"))
+            Console.WriteLine("Inconclusive review?");
+            if (Console.ReadLine().ToLower().Contains("yes"))
             {
-                Console.WriteLine("\nCancelling inconclusive review logging mode.");
-                goto continuationq;
+                string supposedpenalty = "";
+                Console.WriteLine("\nWhat was the supposed penalty? Enter cancel to return to start.");
+                supposedpenalty = Console.ReadLine();
+                if (supposedpenalty.ToLower().Contains("cancel"))
+                {
+                    Console.WriteLine("\nCancelling inconclusive review logging mode.");
+                    goto continuationq;
+                }
+                else
+                {
+                    File.AppendAllText(filename, $"\nInconclusive {supposedpenalty} penalty review with {minute}:{secondscleaned} remaining in the {period}.");
+                    goto continuationq; 
+                }
             }
             else
             {
-                File.AppendAllText(filename, $"\nInconclusive {supposedpenalty} penalty review at {minute}:{secondscleaned} remaining in the {period}.");
+                File.AppendAllText(filename, $"\nPlay is under review with {minute}:{secondscleaned} remaining in the {period}.");
                 goto continuationq;
             }
+
         }
         // skipreviewmode:;
         Console.WriteLine("What happened? Possible options: icing, iced, penalty, offsides, offside, score, goal, challenge, cancel.");
@@ -263,35 +297,35 @@ class WriteAllText
             else
             {
                 occurence = "scored";
-            }    
+            }
         }
-        else if (occurence.Contains("challenge"))
-        {
-            Console.WriteLine("\nWhat team was challenged?");
-            offendingteam = Console.ReadLine();
-            Console.WriteLine("\nWhat was the challenge for?");
-            challengereason = Console.ReadLine();
-            Console.WriteLine("\nWas the challenge successful?");
-            if (Console.ReadLine().ToLower().Contains("yes"))
-            {
-                challengesuccessful = true;
-            }
-            else
-            {
-                challengesuccessful = false;
-            }
-            challengeoutcome = "";
-            if (challengesuccessful)
-            {
-                challengeoutcome = "successfully";
-            }
-            else
-            {
-                challengeoutcome = "unsuccessfully";
-            }
-            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}.");
-            goto continuationq;
-        }
+        /* else if (occurence.Contains("challenge"))
+         {
+             Console.WriteLine("\nWhat team was challenged?");
+             offendingteam = Console.ReadLine();
+             Console.WriteLine("\nWhat was the challenge for?");
+             challengereason = Console.ReadLine();
+             Console.WriteLine("\nWas the challenge successful?");
+             if (Console.ReadLine().ToLower().Contains("yes"))
+             {
+                 challengesuccessful = true;
+             }
+             else
+             {
+                 challengesuccessful = false;
+             }
+             challengeoutcome = "";
+             if (challengesuccessful)
+             {
+                 challengeoutcome = "successfully";
+             }
+             else
+             {
+                 challengeoutcome = "unsuccessfully";
+             }
+             File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}.");
+             goto continuationq;
+         } */
         else if (occurence.Contains("cancel"))
         {
             Console.WriteLine("Cancelling current edit.");
@@ -306,6 +340,10 @@ class WriteAllText
         {
             File.AppendAllText(filename, $"\n{team} {occurence} in Round {shootoutround} of the shootout!");
         }
+        else if (occurence.Contains("scored"))
+        {
+            File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in the {period}!");
+        }
         else
         {
             File.AppendAllText(filename, $"\n{team} {occurence} with {minute}:{secondscleaned} remaining in the {period}.");
@@ -313,21 +351,23 @@ class WriteAllText
     continuationq:
         logtext = File.ReadAllLines(filename);
         lastevent = logtext[logtext.Length - 1];
+        powerplaygoal = (lastevent.ToLower().Contains("ppg"));
         if ((occurence.ToLower().Contains("scored") || occurence.ToLower().Contains("challenge") || occurence.ToLower().Contains("review") || occurence.ToLower().Contains("penalty")) && tweetmode)
         {
             shouldtweet = true;
         }
         else
         {
-            Console.WriteLine($"\nTweet non-important event? Event: {occurence}");
+            Console.WriteLine($"\nTweet non-important event? Event: {lastevent}");
             if (Console.ReadLine().ToLower().Contains("yes"))
             {
                 shouldtweet = true;
             }
         }
+        
         if (shouldtweet)
         {
-            await StringMaker(lastevent);
+            await StringMaker(lastevent, powerplaygoal);
         }
         Console.WriteLine("Would you like to continue editing?");
         string continuationQ = Console.ReadLine().ToLower();
@@ -371,7 +411,7 @@ class WriteAllText
         Console.Clear();
     }
 
-    public static async Task StringMaker(string lastevent)
+    public static async Task StringMaker(string lastevent, bool powerplaygoal = false)
     {
         string tweet = lastevent;
         string scoreline = "";
@@ -379,7 +419,14 @@ class WriteAllText
         string powerplayteam = "";
         if (lastevent.ToLower().Contains("scored"))
         {
-            tweet = Emoji.PoliceCarLight + $" {lastevent}";
+            if (powerplaygoal)
+            {
+                tweet = Emoji.PoliceCarLight + $" {Emoji.HighVoltage}" + $" {lastevent}";
+            }
+            else 
+            {
+                tweet = Emoji.PoliceCarLight + $" {lastevent}";
+            }
             Console.WriteLine("Append a score update?");
             if (Console.ReadLine().ToLower().Contains("yes"))
             {
@@ -408,12 +455,16 @@ class WriteAllText
             powerplayteam = Console.ReadLine();
             tweet = tweet + $" {powerplayteam} is on the powerplay!";
         }
-        Thread.Sleep(5);
+        else if (lastevent.ToLower().Contains("play is under review"))
+        {
+            tweet = Emoji.Eye + $" {lastevent}";
+        }
+        Thread.Sleep(100);
         Console.WriteLine($"Tweet: {tweet}\nAny comments?");
         if (Console.ReadLine().ToLower().Contains("yes"))
         {
             Console.WriteLine("Write your comments and click enter.");
-            tweet = tweet + Console.ReadLine();
+            tweet += Console.ReadLine();
         }
         await Tweeter(tweet);
     }
@@ -424,20 +475,20 @@ class WriteAllText
         string token = File.ReadAllText("secure/token.txt").Trim();
         string tokensecret = File.ReadAllText("secure/tokensecret.txt").Trim();
         string pinCode = "";
-        // Create a client for your app
-        var appClient = new TwitterClient($"{apikey}", $"{apikeysecret}");
-
-        // Start the authentication process
-        var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
-        pinCode = File.ReadAllText("secure/pin.txt");
         token = File.ReadAllLines("secure/usercredentials.txt")[0];
         tokensecret = File.ReadAllLines("secure/usercredentials.txt")[1];
+
+        var appClient = new TwitterClient($"{apikey}", $"{apikeysecret}");
+        // Start the authentication process
+        var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
+      //  var authenticatedUser = await appClient.Users.GetAuthenticatedUserAsync(); causes an exception for bad request, not needed atm
+        pinCode = File.ReadAllText("secure/pin.txt");
+
         var userClient = new TwitterClient($"{apikey}", $"{apikeysecret}", $"{token}", $"{tokensecret}");
         Console.WriteLine($"\nSending following tweet: {tweet}");
         Console.WriteLine("\nWanna send the tweet? Debug log moment");
         if (Console.ReadLine().ToLower().Contains("yes"))
         {
-            var user = await userClient.Users.GetAuthenticatedUserAsync();
             try
             {
                 await userClient.Tweets.PublishTweetAsync($"{tweet}");
