@@ -47,7 +47,7 @@ class WriteAllText
         Console.WriteLine($"\nWould you like to create a new game? Yes/No? Using directory: {preferreddir}");
         bool newgame = false;
         string newgameq = Console.ReadLine().ToLower();
-        
+
         if (newgameq.Contains("yes"))
         {
             newgame = true;
@@ -259,7 +259,7 @@ class WriteAllText
                 else
                 {
                     File.AppendAllText(filename, $"\nInconclusive {supposedpenalty} penalty review with {minute}:{secondscleaned} remaining in the {period}.");
-                    goto continuationq; 
+                    goto continuationq;
                 }
             }
             else
@@ -299,33 +299,33 @@ class WriteAllText
                 occurence = "scored";
             }
         }
-        /* else if (occurence.Contains("challenge"))
-         {
-             Console.WriteLine("\nWhat team was challenged?");
-             offendingteam = Console.ReadLine();
-             Console.WriteLine("\nWhat was the challenge for?");
-             challengereason = Console.ReadLine();
-             Console.WriteLine("\nWas the challenge successful?");
-             if (Console.ReadLine().ToLower().Contains("yes"))
-             {
-                 challengesuccessful = true;
-             }
-             else
-             {
-                 challengesuccessful = false;
-             }
-             challengeoutcome = "";
-             if (challengesuccessful)
-             {
-                 challengeoutcome = "successfully";
-             }
-             else
-             {
-                 challengeoutcome = "unsuccessfully";
-             }
-             File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}.");
-             goto continuationq;
-         } */
+        else if (occurence.Contains("challenge"))
+        {
+            Console.WriteLine("\nWhat team was challenged?");
+            offendingteam = Console.ReadLine();
+            Console.WriteLine("\nWhat was the challenge for?");
+            challengereason = Console.ReadLine();
+            Console.WriteLine("\nWas the challenge successful?");
+            if (Console.ReadLine().ToLower().Contains("yes"))
+            {
+                challengesuccessful = true;
+            }
+            else
+            {
+                challengesuccessful = false;
+            }
+            challengeoutcome = "";
+            if (challengesuccessful)
+            {
+                challengeoutcome = "successfully";
+            }
+            else
+            {
+                challengeoutcome = "unsuccessfully";
+            }
+            File.AppendAllText(filename, $"\n{team} {challengeoutcome} challenged {offendingteam} for {challengereason} with {minute}:{secondscleaned} remaining in the {period}.");
+            goto continuationq;
+        }
         else if (occurence.Contains("cancel"))
         {
             Console.WriteLine("Cancelling current edit.");
@@ -364,23 +364,24 @@ class WriteAllText
                 shouldtweet = true;
             }
         }
-        
         if (shouldtweet)
         {
             await StringMaker(lastevent, powerplaygoal);
         }
-        Console.WriteLine("Would you like to continue editing?");
-        string continuationQ = Console.ReadLine().ToLower();
-        if (continuationQ.Contains("yes"))
-        {
-            goto editorcontinue;
-        }
-        else
-        {
-            Console.WriteLine();
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
-        }
+        /*  Console.WriteLine("Would you like to continue editing?");
+          string continuationQ = Console.ReadLine().ToLower();
+
+          if (continuationQ.Contains("yes"))
+          {
+              goto editorcontinue;
+          }
+          else
+          {
+              Console.WriteLine();
+              Console.WriteLine("Press any key to exit...");
+              Console.ReadKey();
+          } */
+        goto editorcontinue;
     }
 
     public static string CleanedSeconds(int seconds)
@@ -421,9 +422,9 @@ class WriteAllText
         {
             if (powerplaygoal)
             {
-                tweet = Emoji.PoliceCarLight + $" {Emoji.HighVoltage}" + $" {lastevent}";
+                tweet = Emoji.PoliceCarLight + $"{Emoji.HighVoltage}" + $" {lastevent}";
             }
-            else 
+            else
             {
                 tweet = Emoji.PoliceCarLight + $" {lastevent}";
             }
@@ -459,6 +460,14 @@ class WriteAllText
         {
             tweet = Emoji.Eye + $" {lastevent}";
         }
+        else if (lastevent.ToLower().Contains("called offsides"))
+        {
+            tweet = Emoji.NoEntry + $" {lastevent}";
+        }
+        else if (lastevent.ToLower().Contains("iced the puck"))
+        {
+            tweet = Emoji.Snowflake + $" {lastevent}";
+        }
         Thread.Sleep(100);
         Console.WriteLine($"Tweet: {tweet}\nAny comments?");
         if (Console.ReadLine().ToLower().Contains("yes"))
@@ -481,23 +490,31 @@ class WriteAllText
         var appClient = new TwitterClient($"{apikey}", $"{apikeysecret}");
         // Start the authentication process
         var authenticationRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
-      //  var authenticatedUser = await appClient.Users.GetAuthenticatedUserAsync(); causes an exception for bad request, not needed atm
+        //  var authenticatedUser = await appClient.Users.GetAuthenticatedUserAsync(); causes an exception for bad request, not needed atm
         pinCode = File.ReadAllText("secure/pin.txt");
-
         var userClient = new TwitterClient($"{apikey}", $"{apikeysecret}", $"{token}", $"{tokensecret}");
         Console.WriteLine($"\nSending following tweet: {tweet}");
-        Console.WriteLine("\nWanna send the tweet? Debug log moment");
-        if (Console.ReadLine().ToLower().Contains("yes"))
+        /*  Console.WriteLine("\nWanna send the tweet? Debug log moment");
+          if (Console.ReadLine().ToLower().Contains("yes"))
+          {
+              try
+              {
+                  await userClient.Tweets.PublishTweetAsync($"{tweet}");
+              }
+              catch (TwitterException e)
+              {
+                  Console.WriteLine(e.ToString());
+                  goto continueanyways;
+              }
+          } */
+        try
         {
-            try
-            {
-                await userClient.Tweets.PublishTweetAsync($"{tweet}");
-            }
-            catch (TwitterException e)
-            {
-                Console.WriteLine(e.ToString());
-                goto continueanyways;
-            }
+            await userClient.Tweets.PublishTweetAsync($"{tweet}");
+        }
+        catch (TwitterException e)
+        {
+            Console.WriteLine(e.ToString());
+            goto continueanyways;
         }
     continueanyways:;
     }

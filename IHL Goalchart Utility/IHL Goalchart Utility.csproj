@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>IHL_Goalchart_Utility</RootNamespace>
     <AssemblyName>IHL Logger Utility</AssemblyName>
-    <ApplicationIcon>IHL Logo.ico</ApplicationIcon>
+    <ApplicationIcon>ihltwitterlogo_8u9_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
