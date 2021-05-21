@@ -37,6 +37,7 @@ class WriteAllText
         int homescore = 0;
         int awayscore = 0;
         bool powerplaygoal = false;
+        string manualtweet = "";
         Console.WriteLine("Tweet mode?");
         if (Console.ReadLine().ToLower().Contains("yes"))
         {
@@ -140,25 +141,25 @@ class WriteAllText
         if (team.Contains("tweet"))
         {
             Console.WriteLine("\nWhat would you like to send? Enter cancel to cancel.");
-            if (Console.ReadLine().ToLower().Contains("cancel"))
+            manualtweet = Console.ReadLine();
+            if (manualtweet.ToLower().Contains("cancel"))
             {
-                goto continuationq;
+                goto editorcontinue;
             }
             else
             {
-                string manualtweet = Console.ReadLine();
                 Console.WriteLine($"Would you like to send out the following?\n{manualtweet}");
                 if (Console.ReadLine().ToLower().Contains("yes"))
                 {
-                    await Tweeter(manualtweet);
+                    occurence = manualtweet;
+                    File.AppendAllText(filename, $"{manualtweet}");
                     goto continuationq;
                 }
                 else
                 {
-                    goto continuationq;
+                    goto editorcontinue;
                 }
             }
-
         }
         if (team.Contains("period") || team.Contains("separate"))
         {
@@ -356,12 +357,20 @@ class WriteAllText
         {
             shouldtweet = true;
         }
+        else if (team.Contains("period") || team.Contains("separate"))
+        {
+            goto editorcontinue;
+        }
         else
         {
             Console.WriteLine($"\nTweet non-important event? Event: {lastevent}");
             if (Console.ReadLine().ToLower().Contains("yes"))
             {
                 shouldtweet = true;
+            }
+            else
+            {
+                shouldtweet = false;
             }
         }
         if (shouldtweet)
